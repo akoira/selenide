@@ -4,7 +4,6 @@ import com.automation.remarks.junit5.VideoExtension;
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.junit5.ScreenShooterExtension;
-import com.codeborne.selenide.junit5.TextReportExtension;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,10 +28,8 @@ import static com.codeborne.selenide.WebDriverRunner.isIE;
 import static org.openqa.selenium.remote.CapabilityType.ACCEPT_INSECURE_CERTS;
 import static org.openqa.selenium.remote.CapabilityType.ACCEPT_SSL_CERTS;
 
-@ExtendWith({ScreenShooterExtension.class, TextReportExtension.class, VideoExtension.class})
+@ExtendWith({ScreenShooterExtension.class, VideoExtension.class})
 public abstract class IntegrationTest extends BaseIntegrationTest {
-  private long defaultTimeout;
-
   @BeforeAll
   static void resetSettingsBeforeClass() {
     resetSettings();
@@ -41,12 +38,11 @@ public abstract class IntegrationTest extends BaseIntegrationTest {
   @BeforeEach
   final void setUpEach() {
     resetSettings();
-    rememberTimeout();
   }
 
   @AfterEach
   public void restoreDefaultProperties() {
-    timeout = defaultTimeout;
+    timeout = 1;
     clickViaJs = false;
   }
 
@@ -58,6 +54,7 @@ public abstract class IntegrationTest extends BaseIntegrationTest {
   }
 
   private static void resetSettings() {
+    timeout = 1;
     Configuration.browser = System.getProperty("selenide.browser", CHROME);
     Configuration.baseUrl = getBaseUrl();
     Configuration.headless = Boolean.parseBoolean(System.getProperty("selenide.headless", "false"));
@@ -68,10 +65,6 @@ public abstract class IntegrationTest extends BaseIntegrationTest {
     Configuration.proxyPort = 0;
     Configuration.proxyHost = "";
     useProxy(true);
-  }
-
-  private void rememberTimeout() {
-    defaultTimeout = timeout;
   }
 
   protected void openFile(String fileName) {

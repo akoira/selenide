@@ -238,13 +238,29 @@ public class Configuration {
   public static boolean versatileSetValue = defaults.versatileSetValue();
 
   /**
-   * Choose how Selenide should retrieve web elements: using default CSS or Sizzle (CSS3)
+   * <p>Choose how Selenide should retrieve web elements: using default CSS or Sizzle (CSS3).</p>
+   * <br>
+   * <p>
+   * Can be configured either programmatically or by system property "-Dselenide.selectorMode=Sizzle".
+   * </p>
+   * <br>
+   *   Possible values: "CSS" or "Sizzle"
+   * <br>
+   *   Default value: CSS
+   *
+   * @see SelectorMode
    */
   public static SelectorMode selectorMode = defaults.selectorMode();
 
   /**
-   * Assertion mode - STRICT or SOFT Asserts
-   * Default value: STRICT
+   * <p>Assertion mode</p>
+   *
+   * <p>Can be configured either programmatically or by system property "-Dselenide.assertionMode=SOFT".</p>
+   *
+   * <br>
+   *   Possible values: "STRICT" or "SOFT"
+   * <br>
+   *   Default value: STRICT
    *
    * @see AssertionMode
    */
@@ -273,7 +289,7 @@ public class Configuration {
   /**
    * Host of Selenide proxy server.
    * Used only if proxyEnabled == true.
-   * Can be configured either programmatically or by system property "-DproxyHost=127.0.0.1"
+   * Can be configured either programmatically or by system property "-Dselenide.proxyHost=127.0.0.1"
    * <br>
    * Default: empty (meaning that Selenide will detect current machine's ip/hostname automatically)
    *

@@ -28,7 +28,7 @@ import com.codeborne.selenide.conditions.SelectedText;
 import com.codeborne.selenide.conditions.Text;
 import com.codeborne.selenide.conditions.Value;
 import com.codeborne.selenide.conditions.Visible;
-import org.checkerframework.com.google.errorprone.annotations.CheckReturnValue;
+import com.google.errorprone.annotations.CheckReturnValue;
 import org.openqa.selenium.WebElement;
 
 import java.util.function.Predicate;
@@ -410,7 +410,11 @@ public abstract class Condition {
    */
   @CheckReturnValue
   public static Condition not(final Condition condition) {
-    return new Not(condition);
+    return condition.negate();
+  }
+
+  public Condition negate() {
+    return new Not(this, absentElementMatchesCondition);
   }
 
   /**
@@ -466,7 +470,7 @@ public abstract class Condition {
   }
 
   private final String name;
-  private final boolean nullIsAllowed;
+  private final boolean absentElementMatchesCondition;
 
   public Condition(String name) {
     this(name, false);
@@ -474,7 +478,7 @@ public abstract class Condition {
 
   public Condition(String name, boolean absentElementMatchesCondition) {
     this.name = name;
-    this.nullIsAllowed = absentElementMatchesCondition;
+    this.absentElementMatchesCondition = absentElementMatchesCondition;
   }
 
   /**
@@ -486,7 +490,7 @@ public abstract class Condition {
   public abstract boolean apply(Driver driver, WebElement element);
 
   public boolean applyNull() {
-    return nullIsAllowed;
+    return absentElementMatchesCondition;
   }
 
   /**
@@ -520,6 +524,6 @@ public abstract class Condition {
   }
 
   public boolean missingElementSatisfiesCondition() {
-    return nullIsAllowed;
+    return absentElementMatchesCondition;
   }
 }

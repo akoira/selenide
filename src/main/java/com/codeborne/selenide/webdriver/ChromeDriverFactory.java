@@ -39,7 +39,7 @@ class ChromeDriverFactory extends AbstractDriverFactory {
       log.info("Using browser binary: {}", config.browserBinary());
       options.setBinary(config.browserBinary());
     }
-    options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
+    options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation", "load-extension"});
     options.addArguments("--proxy-bypass-list=<-loopback>");
     options.merge(createCommonCapabilities(config, proxy));
     transferChromeOptionsFromSystemProperties(config, options);
@@ -62,6 +62,7 @@ class ChromeDriverFactory extends AbstractDriverFactory {
     }
 
     Map<String, Object> chromePreferences = new HashMap<>();
+    chromePreferences.put("credentials_enable_service", false);
     chromePreferences.put("download.default_directory", new File(config.downloadsFolder()).getAbsolutePath());
 
     if (System.getProperty("chromeoptions.prefs") != null) {
