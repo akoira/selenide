@@ -1,4 +1,9 @@
 # Changelog
+## 5.14.2-ak1 (released 23.08.2020)
+* CreateDriverCommand - this code has been commented to exclude memory leak in case when we use this framework
+as a part of a service-application. The better way I think to introduce some kind of configuration for this
+functionality or better to keep aa reference on this thread and provide some mechanism to remove it
+if it is required
 
 ## 5.14.2 (released 22.08.2020)
 * upgraded to WebDriverManager 4.2.0
