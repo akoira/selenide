@@ -1,5 +1,6 @@
 package com.codeborne.selenide.impl;
 
+import com.codeborne.selenide.DownloadsFolder;
 import com.codeborne.selenide.proxy.SelenideProxyServer;
 import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
@@ -14,12 +15,16 @@ class UnusedWebdriversCleanupThread extends Thread {
   private final Collection<Thread> allWebDriverThreads;
   private final Map<Long, WebDriver> threadWebDriver;
   private final Map<Long, SelenideProxyServer> threadProxyServer;
+  private final Map<Long, DownloadsFolder> threadDownloadsFolder;
 
-  UnusedWebdriversCleanupThread(Collection<Thread> allWebDriverThreads, Map<Long, WebDriver> threadWebDriver,
-                                Map<Long, SelenideProxyServer> threadProxyServer) {
+  UnusedWebdriversCleanupThread(Collection<Thread> allWebDriverThreads,
+                                Map<Long, WebDriver> threadWebDriver,
+                                Map<Long, SelenideProxyServer> threadProxyServer,
+                                Map<Long, DownloadsFolder> threadDownloadsFolder) {
     this.allWebDriverThreads = allWebDriverThreads;
     this.threadWebDriver = threadWebDriver;
     this.threadProxyServer = threadProxyServer;
+    this.threadDownloadsFolder = threadDownloadsFolder;
     setDaemon(true);
     setName("Webdrivers killer thread");
   }
@@ -62,6 +67,8 @@ class UnusedWebdriversCleanupThread extends Thread {
     if (proxy != null) {
       proxy.shutdown();
     }
+
+    threadDownloadsFolder.remove(thread.getId());
   }
 }
 

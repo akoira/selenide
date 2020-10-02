@@ -1,6 +1,6 @@
 package com.codeborne.selenide;
 
-import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.MutableCapabilities;
 
 public interface Config {
   String browser();
@@ -13,7 +13,8 @@ public interface Config {
   boolean driverManagerEnabled();
   String browserBinary();
   String pageLoadStrategy();
-  DesiredCapabilities browserCapabilities();
+  long pageLoadTimeout();
+  MutableCapabilities browserCapabilities();
 
   String baseUrl();
   long timeout();

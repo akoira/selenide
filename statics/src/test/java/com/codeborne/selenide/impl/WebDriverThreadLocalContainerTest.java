@@ -10,8 +10,12 @@ import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+
 import static com.codeborne.selenide.Selenide.closeWebDriver;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class WebDriverThreadLocalContainerTest implements WithAssertions {
   private final WebDriverThreadLocalContainer container = new WebDriverThreadLocalContainer();
@@ -19,6 +23,7 @@ class WebDriverThreadLocalContainerTest implements WithAssertions {
   @BeforeEach
   void mockWebDriver() {
     WebDriverRunner.setProxy(null);
+    Configuration.holdBrowserOpen = false;
     Configuration.reopenBrowserOnFail = true;
     Configuration.browserSize = null;
     Configuration.startMaximized = false;
@@ -27,6 +32,7 @@ class WebDriverThreadLocalContainerTest implements WithAssertions {
 
   @AfterEach
   void resetSetting() {
+    Configuration.holdBrowserOpen = false;
     Configuration.reopenBrowserOnFail = true;
     Configuration.browser = "firefox";
   }
@@ -78,10 +84,38 @@ class WebDriverThreadLocalContainerTest implements WithAssertions {
     assertThat(container.hasWebDriverStarted()).isFalse();
   }
 
+  @Test
+  void holdsAllBrowsers_toAutomaticallyCloseThem() {
+    WebDriver webDriver = container.getAndCheckWebDriver();
+
+    assertThat(webDriver).isNotNull();
+    assertThat(container.allWebDriverThreads).hasSize(1);
+    assertThat(container.threadWebDriver).hasSize(1);
+    assertThat(container.threadWebDriver.get(container.allWebDriverThreads.iterator().next().getId())).isSameAs(webDriver);
+    assertThat(container.cleanupThreadStarted.get()).isTrue();
+  }
+
+  @Test
+  void doesNotCloseBrowsers_ifHoldBrowserOpenSettingIsTrue() {
+    Configuration.holdBrowserOpen = true;
+
+    WebDriver webDriver = container.getAndCheckWebDriver();
+
+    assertThat(webDriver).isNotNull();
+    assertThat(container.allWebDriverThreads).hasSize(0);
+    assertThat(container.cleanupThreadStarted.get()).isFalse();
+  }
+
   private static class DummyProvider implements WebDriverProvider {
     @Override
-    public WebDriver createDriver(DesiredCapabilities desiredCapabilities) {
-      return mock(WebDriver.class);
+    @CheckReturnValue
+    @Nonnull
+    public WebDriver createDriver(@Nonnull DesiredCapabilities desiredCapabilities) {
+      WebDriver webdriver = mock(WebDriver.class);
+      WebDriver.Options options = mock(WebDriver.Options.class);
+      when(webdriver.manage()).thenReturn(options);
+      when(options.timeouts()).thenReturn(mock(WebDriver.Timeouts.class));
+      return webdriver;
     }
   }
 }

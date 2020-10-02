@@ -4,6 +4,7 @@ import com.codeborne.selenide.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import static com.codeborne.selenide.ClickOptions.usingJavaScript;
 import static com.codeborne.selenide.Condition.matchText;
 import static com.codeborne.selenide.Selenide.$;
 
@@ -34,5 +35,23 @@ class ClickRelativeTest extends IntegrationTest {
     $("#page").click(123, 222);
 
     $("#coords").should(matchText("(523, 522)"));
+  }
+
+  @Test
+  void userCanClickElementWithOffsetPositions_withClickOptionJS() {
+    Configuration.clickViaJs = false;
+
+    $("#page").click(usingJavaScript().offset(123, 222));
+
+    $("#coords").should(matchText("(523, 522)"));
+  }
+
+  @Test
+  void userCanClickElementWithOffsetXPosition_withClickOptionJS() {
+    Configuration.clickViaJs = false;
+
+    $("#page").click(usingJavaScript().offsetX(123));
+
+    $("#coords").should(matchText("(523, 300)"));
   }
 }

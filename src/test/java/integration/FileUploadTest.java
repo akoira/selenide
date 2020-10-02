@@ -12,6 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class FileUploadTest extends ITest {
   @BeforeEach
   void openFileUploadForm() {
+    setTimeout(4000);
     if (browser().isIE()) {
       driver().close();
     }
@@ -93,6 +94,26 @@ class FileUploadTest extends ITest {
 
     assertThat(server.getUploadedFiles().get(0).getString()).contains("Hello, WinRar!");
     assertThat(server.getUploadedFiles().get(1).getString()).contains("jQuery JavaScript Library v1.8.3");
+  }
+
+  @Test
+  void userCanUploadMultipleFiles_withoutForm() {
+    openFile("file_upload_without_form.html");
+    $("#fileInput").uploadFile(
+      new File("src/test/java/../resources/файл-с-русским-названием.txt"),
+      new File("src/test/java/../resources/hello_world.txt"),
+      new File("src/test/resources/child_frame.txt"));
+
+    $("#uploadButton").click();
+    $("h3").shouldHave(text("Uploaded 3 files").because("Actual files: " + server.getUploadedFiles()));
+
+    assertThat(server.getUploadedFiles())
+      .extracting(f -> f.getName())
+      .containsExactlyInAnyOrder("файл-с-русским-названием.txt", "hello_world.txt", "child_frame.txt");
+
+    assertThat(server.getUploadedFiles())
+      .extracting(f -> f.getString("UTF-8"))
+      .containsExactlyInAnyOrder("Превед медвед!", "Hello, WinRar!", "This is last frame!");
   }
 
   @Test

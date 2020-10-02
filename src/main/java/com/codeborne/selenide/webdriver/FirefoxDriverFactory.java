@@ -2,50 +2,85 @@ package com.codeborne.selenide.webdriver;
 
 import com.codeborne.selenide.Browser;
 import com.codeborne.selenide.Config;
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.IOUtils;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
+import org.openqa.selenium.firefox.GeckoDriverService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.Integer.parseInt;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-class FirefoxDriverFactory extends AbstractDriverFactory {
+@ParametersAreNonnullByDefault
+public class FirefoxDriverFactory extends AbstractDriverFactory {
   private static final Logger log = LoggerFactory.getLogger(FirefoxDriverFactory.class);
 
   @Override
-  boolean supports(Config config, Browser browser) {
-    return browser.isFirefox();
+  public void setupWebdriverBinary() {
+    if (isSystemPropertyNotSet("webdriver.gecko.driver")) {
+      WebDriverManager.firefoxdriver().setup();
+    }
   }
 
   @Override
-  WebDriver create(Config config, Proxy proxy) {
-    String logFilePath = System.getProperty(FirefoxDriver.SystemProperty.BROWSER_LOGFILE, "/dev/null");
-    System.setProperty(FirefoxDriver.SystemProperty.BROWSER_LOGFILE, logFilePath);
-    return createFirefoxDriver(config, proxy);
+  @CheckReturnValue
+  @Nonnull
+  public WebDriver create(Config config, Browser browser, @Nullable Proxy proxy, File browserDownloadsFolder) {
+    return new FirefoxDriver(createDriverService(config), createCapabilities(config, browser, proxy, browserDownloadsFolder));
   }
 
-  private WebDriver createFirefoxDriver(Config config, Proxy proxy) {
-    FirefoxOptions options = createFirefoxOptions(config, proxy);
-    return new FirefoxDriver(options);
+  @CheckReturnValue
+  @Nonnull
+  protected GeckoDriverService createDriverService(Config config) {
+    File logFile = webdriverLog(config);
+    return new GeckoDriverService.Builder()
+      .withLogFile(logFile)
+      .build();
   }
 
-  FirefoxOptions createFirefoxOptions(Config config, Proxy proxy) {
+  @Override
+  @CheckReturnValue
+  @Nonnull
+  public FirefoxOptions createCapabilities(Config config, Browser browser, @Nullable Proxy proxy, File browserDownloadsFolder) {
     FirefoxOptions firefoxOptions = new FirefoxOptions();
     firefoxOptions.setHeadless(config.headless());
+    setupBrowserBinary(config, firefoxOptions);
+    setupPreferences(firefoxOptions);
+    firefoxOptions.merge(createCommonCapabilities(config, browser, proxy));
+
+    setupDownloadsFolder(config, firefoxOptions, browserDownloadsFolder);
+
+    Map<String, String> ffProfile = collectFirefoxProfileFromSystemProperties();
+    if (!ffProfile.isEmpty()) {
+      transferFirefoxProfileFromSystemProperties(firefoxOptions, ffProfile);
+    }
+    return firefoxOptions;
+  }
+
+  protected void setupBrowserBinary(Config config, FirefoxOptions firefoxOptions) {
     if (!config.browserBinary().isEmpty()) {
       log.info("Using browser binary: {}", config.browserBinary());
       firefoxOptions.setBinary(config.browserBinary());
     }
+  }
+
+  protected void setupPreferences(FirefoxOptions firefoxOptions) {
     firefoxOptions.addPreference("network.automatic-ntlm-auth.trusted-uris", "http://,https://");
     firefoxOptions.addPreference("network.automatic-ntlm-auth.allow-non-fqdn", true);
     firefoxOptions.addPreference("network.negotiate-auth.delegation-uris", "http://,https://");
@@ -54,27 +89,20 @@ class FirefoxDriverFactory extends AbstractDriverFactory {
     firefoxOptions.addPreference("security.csp.enable", false);
     firefoxOptions.addPreference("network.proxy.no_proxies_on", "");
     firefoxOptions.addPreference("network.proxy.allow_hijacking_localhost", true);
-
-    firefoxOptions.merge(createCommonCapabilities(config, proxy));
-
-    FirefoxProfile profile = Optional.ofNullable(firefoxOptions.getProfile()).orElseGet(FirefoxProfile::new);
-    setupDownloadsFolder(config, profile);
-    transferFirefoxProfileFromSystemProperties(profile);
-    firefoxOptions.setProfile(profile);
-
-    return firefoxOptions;
   }
 
-  private void setupDownloadsFolder(Config config, FirefoxProfile profile) {
-    if (profile.getStringPreference("browser.download.dir", "").isEmpty()) {
-      profile.setPreference("browser.download.dir", new File(config.downloadsFolder()).getAbsolutePath());
-      profile.setPreference("browser.helperApps.neverAsk.saveToDisk", popularContentTypes());
-      profile.setPreference("pdfjs.disabled", true);  // disable the built-in viewer
-      profile.setPreference("browser.download.folderList", 2); // 0=Desktop, 1=Downloads, 2="reuse last location"
+  protected void setupDownloadsFolder(Config config, FirefoxOptions firefoxOptions, File browserDownloadsFolder) {
+    if (config.remote() == null) {
+      firefoxOptions.addPreference("browser.download.dir", browserDownloadsFolder.getAbsolutePath());
     }
+    firefoxOptions.addPreference("browser.helperApps.neverAsk.saveToDisk", popularContentTypes());
+    firefoxOptions.addPreference("pdfjs.disabled", true);  // disable the built-in viewer
+    firefoxOptions.addPreference("browser.download.folderList", 2); // 0=Desktop, 1=Downloads, 2="reuse last location"
   }
 
-  String popularContentTypes() {
+  @CheckReturnValue
+  @Nonnull
+  protected String popularContentTypes() {
     try {
       return String.join(";", IOUtils.readLines(getClass().getResourceAsStream("/content-types.properties"), UTF_8));
     }
@@ -84,32 +112,45 @@ class FirefoxDriverFactory extends AbstractDriverFactory {
     }
   }
 
-  private void transferFirefoxProfileFromSystemProperties(FirefoxProfile profile) {
+  @CheckReturnValue
+  @Nonnull
+  protected Map<String, String> collectFirefoxProfileFromSystemProperties() {
     String prefix = "firefoxprofile.";
 
+    Map<String, String> result = new HashMap<>();
     for (String key : System.getProperties().stringPropertyNames()) {
       if (key.startsWith(prefix)) {
         String capability = key.substring(prefix.length());
         String value = System.getProperties().getProperty(key);
-        log.debug("Use {}={}", key, value);
-        if (isBoolean(value)) {
-          profile.setPreference(capability, parseBoolean(value));
-        }
-        else if (isInteger(value)) {
-          profile.setPreference(capability, parseInt(value));
-        }
-        else {
-          profile.setPreference(capability, value);
-        }
+        result.put(capability, value);
       }
     }
+
+    return result;
   }
 
-  private boolean isBoolean(String value) {
-    return "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value);
+  protected void transferFirefoxProfileFromSystemProperties(FirefoxOptions firefoxOptions, Map<String, String> ffProfile) {
+    FirefoxProfile profile = Optional.ofNullable(firefoxOptions.getProfile()).orElseGet(FirefoxProfile::new);
+
+    for (Map.Entry<String, String> entry : ffProfile.entrySet()) {
+      String capability = entry.getKey();
+      String value = entry.getValue();
+      log.debug("Use {}={}", capability, value);
+      setCapability(profile, capability, value);
+    }
+
+    firefoxOptions.setProfile(profile);
   }
 
-  private boolean isInteger(String value) {
-    return value.matches("^-?\\d+$");
+  protected void setCapability(FirefoxProfile profile, String capability, String value) {
+    if (isBoolean(value)) {
+      profile.setPreference(capability, parseBoolean(value));
+    }
+    else if (isInteger(value)) {
+      profile.setPreference(capability, parseInt(value));
+    }
+    else {
+      profile.setPreference(capability, value);
+    }
   }
 }

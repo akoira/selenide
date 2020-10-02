@@ -9,7 +9,9 @@ import integration.IntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.NoSuchElementException;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 
 import static com.codeborne.selenide.Condition.cssClass;
@@ -40,7 +42,7 @@ class ErrorMsgWithScreenshotsTest extends IntegrationTest {
     Configuration.reportsUrl = "http://ci.org/";
     Screenshots.screenshots = new ScreenShotLaboratory() {
       @Override
-      public String takeScreenShot(Driver driver) {
+      public String takeScreenShot(@Nonnull Driver driver) {
         return new File(reportsFolder, "1.jpg").getAbsolutePath();
       }
     };
@@ -62,7 +64,10 @@ class ErrorMsgWithScreenshotsTest extends IntegrationTest {
         .shouldBe(visible)
     )
       .isInstanceOf(ElementNotFound.class)
-      .hasMessageContaining("Element not found {#nonexisting-form}");
+      .hasMessageContaining("Element not found {#nonexisting-form/by text: mymail@gmail.com.findBy(css class 'trash')}")
+      .getCause()
+      .isInstanceOf(NoSuchElementException.class)
+      .hasMessageContainingAll("Unable to locate element", "#nonexisting-form");
   }
 
   @Test

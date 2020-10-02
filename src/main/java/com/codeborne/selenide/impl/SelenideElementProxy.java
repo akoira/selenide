@@ -14,6 +14,9 @@ import org.openqa.selenium.InvalidElementStateException;
 import org.openqa.selenium.JavascriptException;
 import org.openqa.selenium.WebDriverException;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -27,10 +30,10 @@ import static com.codeborne.selenide.logevents.ErrorsCollector.validateAssertion
 import static com.codeborne.selenide.logevents.LogEvent.EventStatus.PASS;
 import static java.util.Arrays.asList;
 
+@ParametersAreNonnullByDefault
 class SelenideElementProxy implements InvocationHandler {
   private static final Set<String> methodsToSkipLogging = new HashSet<>(asList(
       "toWebElement",
-      "getWrappedElement",
       "toString",
       "getSearchCriteria"
   ));
@@ -53,14 +56,15 @@ class SelenideElementProxy implements InvocationHandler {
   }
 
   @Override
-  public Object invoke(Object proxy, Method method, Object... args) throws Throwable {
+  public Object invoke(Object proxy, Method method, @Nullable Object... args) throws Throwable {
+    Arguments arguments = new Arguments(args);
     if (methodsToSkipLogging.contains(method.getName()))
       return Commands.getInstance().execute(proxy, webElementSource, method.getName(), args);
 
     validateAssertionMode(config());
 
-    long timeoutMs = getTimeoutMs(method, args);
-    long pollingIntervalMs = getPollingIntervalMs(method, args);
+    long timeoutMs = getTimeoutMs(method, arguments);
+    long pollingIntervalMs = getPollingIntervalMs(method, arguments);
     SelenideLog log = SelenideLogger.beginStep(webElementSource.getSearchCriteria(), method.getName(), args);
     try {
       Object result = dispatchAndRetry(timeoutMs, pollingIntervalMs, proxy, method, args);
@@ -90,13 +94,13 @@ class SelenideElementProxy implements InvocationHandler {
   }
 
   protected Object dispatchAndRetry(long timeoutMs, long pollingIntervalMs,
-                                    Object proxy, Method method, Object[] args) throws Throwable {
+                                    Object proxy, Method method, @Nullable Object[] args) throws Throwable {
     Stopwatch stopwatch = new Stopwatch(timeoutMs);
 
     Throwable lastError;
     do {
       try {
-        if (SelenideElement.class.isAssignableFrom(method.getDeclaringClass())) {
+        if (isSelenideElementMethod(method)) {
           return Commands.getInstance().execute(proxy, webElementSource, method.getName(), args);
         }
 
@@ -134,10 +138,17 @@ class SelenideElementProxy implements InvocationHandler {
     throw lastError;
   }
 
+  @CheckReturnValue
+  static boolean isSelenideElementMethod(Method method) {
+    return SelenideElement.class.isAssignableFrom(method.getDeclaringClass());
+  }
+
+  @CheckReturnValue
   private boolean isElementNotClickableException(Throwable e) {
     return e instanceof WebDriverException && e.getMessage().contains("is not clickable");
   }
 
+  @CheckReturnValue
   static boolean shouldRetryAfterError(Throwable e) {
     if (e instanceof FileNotFoundException) return false;
     if (e instanceof IllegalArgumentException) return false;
@@ -147,16 +158,17 @@ class SelenideElementProxy implements InvocationHandler {
     return e instanceof Exception || e instanceof AssertionError;
   }
 
-  private long getTimeoutMs(Method method, Object[] args) {
-    return isWaitCommand(method) ?
-      args.length == 3 ? (Long) args[args.length - 2] : (Long) args[args.length - 1] :
-      config().timeout();
+  @CheckReturnValue
+  private long getTimeoutMs(Method method, Arguments arguments) {
+    return isWaitCommand(method) ? arguments.nth(1) : config().timeout();
   }
 
-  private long getPollingIntervalMs(Method method, Object[] args) {
-    return isWaitCommand(method) && args.length == 3 ? (Long) args[args.length - 1] : config().pollingInterval();
+  @CheckReturnValue
+  private long getPollingIntervalMs(Method method, Arguments arguments) {
+    return isWaitCommand(method) && arguments.length() == 3 ? arguments.nth(2) : config().pollingInterval();
   }
 
+  @CheckReturnValue
   private boolean isWaitCommand(Method method) {
     return "waitUntil".equals(method.getName()) || "waitWhile".equals(method.getName());
   }

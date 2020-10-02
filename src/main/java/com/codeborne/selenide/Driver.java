@@ -12,6 +12,7 @@ public interface Driver {
   WebDriver getWebDriver();
   SelenideProxyServer getProxy();
   WebDriver getAndCheckWebDriver();
+  DownloadsFolder browserDownloadsFolder();
   void close();
 
   default boolean supportsJavascript() {
@@ -51,7 +52,7 @@ public interface Driver {
   }
 
   default SelenideTargetLocator switchTo() {
-    return new SelenideTargetLocator(config(), getWebDriver());
+    return new SelenideTargetLocator(this);
   }
 
   default Actions actions() {

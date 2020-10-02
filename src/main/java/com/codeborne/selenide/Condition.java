@@ -10,27 +10,33 @@ import com.codeborne.selenide.conditions.CssValue;
 import com.codeborne.selenide.conditions.CustomMatch;
 import com.codeborne.selenide.conditions.Disabled;
 import com.codeborne.selenide.conditions.Enabled;
+import com.codeborne.selenide.conditions.ExactOwnText;
 import com.codeborne.selenide.conditions.ExactText;
 import com.codeborne.selenide.conditions.ExactTextCaseSensitive;
 import com.codeborne.selenide.conditions.Exist;
 import com.codeborne.selenide.conditions.ExplainedCondition;
 import com.codeborne.selenide.conditions.Focused;
 import com.codeborne.selenide.conditions.Hidden;
+import com.codeborne.selenide.conditions.Href;
 import com.codeborne.selenide.conditions.IsImageLoaded;
 import com.codeborne.selenide.conditions.MatchAttributeWithValue;
 import com.codeborne.selenide.conditions.MatchText;
 import com.codeborne.selenide.conditions.NamedCondition;
 import com.codeborne.selenide.conditions.Not;
 import com.codeborne.selenide.conditions.Or;
+import com.codeborne.selenide.conditions.OwnText;
 import com.codeborne.selenide.conditions.PseudoElementPropertyWithValue;
 import com.codeborne.selenide.conditions.Selected;
 import com.codeborne.selenide.conditions.SelectedText;
 import com.codeborne.selenide.conditions.Text;
 import com.codeborne.selenide.conditions.Value;
 import com.codeborne.selenide.conditions.Visible;
-import com.google.errorprone.annotations.CheckReturnValue;
 import org.openqa.selenium.WebElement;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.function.Predicate;
 
 import static java.util.Arrays.asList;
@@ -38,6 +44,8 @@ import static java.util.Arrays.asList;
 /**
  * Conditions to match web elements: checks for visibility, text etc.
  */
+@SuppressWarnings("StaticInitializerReferencesSubClass")
+@ParametersAreNonnullByDefault
 public abstract class Condition {
   /**
    * Checks if element is visible
@@ -106,6 +114,7 @@ public abstract class Condition {
    * @return true iff attribute exists
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition attribute(String attributeName) {
     return new Attribute(attributeName);
   }
@@ -117,6 +126,7 @@ public abstract class Condition {
    * @param expectedAttributeValue expected value of attribute
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition attribute(String attributeName, String expectedAttributeValue) {
     return new AttributeWithValue(attributeName, expectedAttributeValue);
   }
@@ -130,8 +140,23 @@ public abstract class Condition {
    * @param attributeRegex regex to match attribute value
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition attributeMatching(String attributeName, String attributeRegex) {
     return new MatchAttributeWithValue(attributeName, attributeRegex);
+  }
+
+  /**
+   * <p>Sample: <code>$("#mydiv").shouldHave(href("/one/two/three.pdf"));</code></p>
+   *
+   * It looks similar to `$.shouldHave(attribute("href", href))`, but
+   *   it overcomes the fact that Selenium returns full url (even if "href" attribute in html contains relative url).
+   *
+   * @param href expected value of "href" attribute
+   */
+  @CheckReturnValue
+  @Nonnull
+  public static Condition href(String href) {
+    return new Href(href);
   }
 
   /**
@@ -143,6 +168,7 @@ public abstract class Condition {
    * @param expectedValue expected value of "value" attribute
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition value(String expectedValue) {
     return new Value(expectedValue);
   }
@@ -157,6 +183,7 @@ public abstract class Condition {
    * @param expectedValue expected value of the property
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition pseudo(String pseudoElementName, String propertyName, String expectedValue) {
     return new PseudoElementPropertyWithValue(pseudoElementName, propertyName, expectedValue);
   }
@@ -169,6 +196,7 @@ public abstract class Condition {
    * @param expectedValue expected content of the pseudo-element
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition pseudo(String pseudoElementName, String expectedValue) {
     return new PseudoElementPropertyWithValue(pseudoElementName, "content", expectedValue);
   }
@@ -179,6 +207,7 @@ public abstract class Condition {
    * @param value expected value of input field
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition exactValue(String value) {
     return attribute("value", value);
   }
@@ -190,6 +219,7 @@ public abstract class Condition {
    * @param name expected name of input field
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition name(String name) {
     return attribute("name", name);
   }
@@ -201,6 +231,7 @@ public abstract class Condition {
    * @param type expected type of input field
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition type(String type) {
     return attribute("type", type);
   }
@@ -211,6 +242,7 @@ public abstract class Condition {
    * @param id expected id of input field
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition id(String id) {
     return attribute("id", id);
   }
@@ -231,6 +263,7 @@ public abstract class Condition {
    * @see #matchText(String)
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition matchesText(String text) {
     return matchText(text);
   }
@@ -243,27 +276,34 @@ public abstract class Condition {
    * @param regex e.g. Kicked.*Chuck Norris - in this case ".*" can contain any characters including spaces, tabs, CR etc.
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition matchText(String regex) {
     return new MatchText(regex);
   }
 
   /**
-   * Assert that element contains given text as a substring
+   * <p>
+   * Assert that element contains given text as a substring.
+   * </p>
+   *
    * <p>Sample: <code>$("h1").shouldHave(text("Hello\s*John"))</code></p>
    *
    * <p>NB! Case insensitive</p>
-   *
    * <p>NB! Ignores multiple whitespaces between words</p>
    *
-   * @param text expected text of HTML element
+   * @param text expected text of HTML element.
+   *             NB! Empty string is not allowed (because any element does contain an empty text).
+   *
+   * @throws IllegalArgumentException if given text is null or empty
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition text(String text) {
     return new Text(text);
   }
 
   /**
-   * Checks on a element that exactly given text is selected (=marked with mouse/keybord)
+   * Checks on a element that exactly given text is selected (=marked with mouse/keyboard)
    *
    * <p>Sample: {@code $("input").shouldHave(selectedText("Text"))}</p>
    *
@@ -272,6 +312,7 @@ public abstract class Condition {
    * @param expectedText expected selected text of the element
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition selectedText(String expectedText) {
     return new SelectedText(expectedText);
   }
@@ -286,6 +327,7 @@ public abstract class Condition {
    * @param text expected text of HTML element
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition textCaseSensitive(String text) {
     return new CaseSensitiveText(text);
   }
@@ -300,8 +342,39 @@ public abstract class Condition {
    * @param text expected text of HTML element
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition exactText(String text) {
     return new ExactText(text);
+  }
+
+  /**
+   * Assert that element contains given text (without checking child elements).
+   * <p>Sample: <code>$("h1").shouldHave(ownText("Hello"))</code></p>
+   *
+   * <p>Case insensitive</p>
+   * <p>NB! Ignores multiple whitespaces between words</p>
+   *
+   * @param text expected text of HTML element without its children
+   */
+  @CheckReturnValue
+  @Nonnull
+  public static Condition ownText(String text) {
+    return new OwnText(text);
+  }
+
+  /**
+   * Assert that element has given text (without checking child elements).
+   * <p>Sample: <code>$("h1").shouldHave(ownText("Hello"))</code></p>
+   *
+   * <p>Case insensitive</p>
+   * <p>NB! Ignores multiple whitespaces between words</p>
+   *
+   * @param text expected text of HTML element without its children
+   */
+  @CheckReturnValue
+  @Nonnull
+  public static Condition exactOwnText(String text) {
+    return new ExactOwnText(text);
   }
 
   /**
@@ -313,6 +386,7 @@ public abstract class Condition {
    * @param text expected text of HTML element
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition exactTextCaseSensitive(String text) {
     return new ExactTextCaseSensitive(text);
   }
@@ -322,6 +396,7 @@ public abstract class Condition {
    * <p>Sample: <code>$("input").shouldHave(cssClass("active"));</code></p>
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition cssClass(String cssClass) {
     return new CssClass(cssClass);
   }
@@ -346,7 +421,8 @@ public abstract class Condition {
    * @see WebElement#getCssValue
    */
   @CheckReturnValue
-  public static Condition cssValue(String propertyName, String expectedValue) {
+  @Nonnull
+  public static Condition cssValue(String propertyName, @Nullable String expectedValue) {
     return new CssValue(propertyName, expectedValue);
   }
 
@@ -359,6 +435,7 @@ public abstract class Condition {
    * @param predicate   the {@link Predicate} to match
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition match(String description, Predicate<WebElement> predicate) {
     return new CustomMatch(description, predicate);
   }
@@ -388,7 +465,7 @@ public abstract class Condition {
   public static final Condition disabled = new Disabled();
 
   /**
-   * Checks that element is selected (inputs like dropdowns etc.)
+   * Checks that element is selected (inputs like drop-downs etc.)
    *
    * @see WebElement#isSelected()
    */
@@ -409,10 +486,12 @@ public abstract class Condition {
    * Typically you don't need to use it.
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition not(final Condition condition) {
     return condition.negate();
   }
 
+  @Nonnull
   public Condition negate() {
     return new Not(this, absentElementMatchesCondition);
   }
@@ -425,6 +504,7 @@ public abstract class Condition {
    * @return logical AND for given conditions.
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition and(String name, Condition... conditions) {
     return new And(name, asList(conditions));
   }
@@ -437,6 +517,7 @@ public abstract class Condition {
    * @return logical OR for given conditions.
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition or(String name, Condition... conditions) {
     return new Or(name, asList(conditions));
   }
@@ -449,6 +530,7 @@ public abstract class Condition {
    * @return Condition
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition be(Condition delegate) {
     return wrap("be", delegate);
   }
@@ -461,6 +543,7 @@ public abstract class Condition {
    * @return Condition
    */
   @CheckReturnValue
+  @Nonnull
   public static Condition have(Condition delegate) {
     return wrap("have", delegate);
   }
@@ -502,6 +585,7 @@ public abstract class Condition {
    * @param element given WebElement
    * @return any string that needs to be appended to error message.
    */
+  @Nullable
   public String actualValue(Driver driver, WebElement element) {
     return null;
   }
@@ -510,6 +594,7 @@ public abstract class Condition {
    * Should be used for explaining the reason of condition
    */
   @CheckReturnValue
+  @Nonnull
   public Condition because(String message) {
     return new ExplainedCondition(this, message);
   }

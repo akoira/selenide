@@ -11,10 +11,16 @@ import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 
+@ParametersAreNonnullByDefault
 public class Describe {
   private static final Logger log = LoggerFactory.getLogger(Describe.class);
 
@@ -36,6 +42,7 @@ public class Describe {
     }
     catch (NoSuchElementException | UnsupportedOperationException | UnsupportedCommandException |
       StaleElementReferenceException browserDoesNotSupportJavaScript) {
+      // ignore
     }
     catch (WebDriverException probablyBrowserDoesNotSupportJavaScript) {
       if (!probablyBrowserDoesNotSupportJavaScript.getMessage().toLowerCase().contains("method is not implemented")) {
@@ -99,7 +106,7 @@ public class Describe {
     }
   }
 
-  private Describe attr(String attributeName, String attributeValue) {
+  private Describe attr(String attributeName, @Nullable String attributeValue) {
     if (attributeValue != null) {
       if (attributeValue.length() > 0) {
         sb.append(' ').append(attributeName).append("=\"").append(attributeValue).append('"');
@@ -111,12 +118,14 @@ public class Describe {
   }
 
   private String serialize() {
-    String text = element.getText();
-    sb.append('>').append(text == null ? "" : text).append("</").append(element.getTagName()).append('>');
+    String text = safeCall("text", element::getText);
+    sb.append('>').append(text == null ? "" : text).append("</").append(safeCall("tagName", element::getTagName)).append('>');
     return sb.toString();
   }
 
   @Override
+  @CheckReturnValue
+  @Nonnull
   public String toString() {
     return sb.toString();
   }
@@ -125,7 +134,9 @@ public class Describe {
     return sb.append('>').toString();
   }
 
-  public static String describe(Driver driver, WebElement element) {
+  @CheckReturnValue
+  @Nonnull
+  public static String describe(Driver driver, @Nullable WebElement element) {
     try {
       if (element == null) {
         return "null";
@@ -136,14 +147,16 @@ public class Describe {
           .isDisplayed(element)
           .serialize();
     } catch (WebDriverException elementDoesNotExist) {
-      return Cleanup.of.webdriverExceptionMessage(elementDoesNotExist);
+      return failedToDescribe(Cleanup.of.webdriverExceptionMessage(elementDoesNotExist));
     }
-    catch (IndexOutOfBoundsException e) {
-      return e.toString();
+    catch (RuntimeException e) {
+      return failedToDescribe(e.toString());
     }
   }
 
-  static String shortly(Driver driver, WebElement element) {
+  @CheckReturnValue
+  @Nonnull
+  static String shortly(Driver driver, @Nonnull WebElement element) {
     try {
       if (element == null) {
         return "null";
@@ -153,11 +166,16 @@ public class Describe {
       }
       return new Describe(driver, element).attr("id").attr("name").flush();
     } catch (WebDriverException elementDoesNotExist) {
-      return Cleanup.of.webdriverExceptionMessage(elementDoesNotExist);
+      return failedToDescribe(Cleanup.of.webdriverExceptionMessage(elementDoesNotExist));
     }
-    catch (IndexOutOfBoundsException e) {
-      return e.toString();
+    catch (RuntimeException e) {
+      return failedToDescribe(e.toString());
     }
+  }
+
+  @Nonnull
+  private static String failedToDescribe(String s2) {
+    return "Ups, failed to described the element [caused by: " + s2 + ']';
   }
 
   private Describe isSelected(WebElement element) {
@@ -175,12 +193,20 @@ public class Describe {
       if (!element.isDisplayed()) {
         sb.append(' ').append("displayed:false");
       }
-    } catch (UnsupportedOperationException | WebDriverException e) {
+    }
+    catch (UnsupportedOperationException | WebDriverException e) {
+      log.debug("Failed to check visibility", e);
+      sb.append(' ').append("displayed:").append(Cleanup.of.webdriverExceptionMessage(e));
+    }
+    catch (RuntimeException e) {
+      log.error("Failed to check visibility", e);
       sb.append(' ').append("displayed:").append(Cleanup.of.webdriverExceptionMessage(e));
     }
     return this;
   }
 
+  @CheckReturnValue
+  @Nonnull
   static String shortly(By selector) {
     if (selector instanceof By.ByCssSelector) {
       return selector.toString()
@@ -190,9 +216,25 @@ public class Describe {
     return selector.toString();
   }
 
+  @CheckReturnValue
+  @Nonnull
   public static String selector(By selector) {
     return selector.toString()
         .replaceFirst("By\\.selector:\\s*", "")
         .replaceFirst("By\\.cssSelector:\\s*", "");
+  }
+
+  private String safeCall(String name, Supplier<String> method) {
+    try {
+      return method.get();
+    }
+    catch (WebDriverException e) {
+      log.debug("Failed to get {}", name, e);
+      return Cleanup.of.webdriverExceptionMessage(e);
+    }
+    catch (RuntimeException e) {
+      log.error("Failed to get {}", name, e);
+      return "?";
+    }
   }
 }

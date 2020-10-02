@@ -2,6 +2,7 @@ package integration;
 
 import com.codeborne.selenide.SelenideConfig;
 import com.codeborne.selenide.SelenideDriver;
+import com.codeborne.selenide.SharedDownloadsFolder;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +42,8 @@ class FirefoxWithProfileTest extends BaseIntegrationTest {
     if (browser().isHeadless()) options.setHeadless(true);
     WebDriver firefox = new FirefoxDriver(options);
 
-    customFirefox = new SelenideDriver(new SelenideConfig().browser("firefox").baseUrl(getBaseUrl()), firefox, null);
+    SelenideConfig config = new SelenideConfig().browser("firefox").baseUrl(getBaseUrl());
+    customFirefox = new SelenideDriver(config, firefox, null, new SharedDownloadsFolder("build/downloads/456"));
     customFirefox.open("/page_with_selects_without_jquery.html");
     customFirefox.$("#non-clickable-element").shouldBe(visible);
 

@@ -1,8 +1,76 @@
 # Changelog
 
-## 5.12.0
+## 5.15.0 (released 25.09.2020)
+* Add method to work with LocalStorage (add/remove/clear elements)  --  thanks to Dmytro Stekanov for PR #1274
+* #1268 Add setting `Configuration.pageLoadTimeout`  --  see PR #1269  NB! Default value is now 30 seconds. 
+* #1261 Add conditions `ownText`, `exactOwnText`  --  see PR #1262
+* #1173 Add new click via `ClickOptions`  --  thanks to Dmytro Stekanov for PR #1226
+* #1259 Add new download via `DownloadOptions`  --  see PR #1260
+* #1266 Fix performance of big filtered collections  --  see PR #1270
+* #1272 Add check "href": `$("a").shouldHave(href("..."))`  --  see PR #1273
+* Add chrome option "--no-sandbox" (I hope it should make Chrome more stable)  --  see commit 3293956d
+* #1265 report a clear error message if cannot create a downloads folder  --  see commit 94ece98f
+* upgraded to WebDriverManager 4.2.2  --  see commit 5da848d2
+
+## 5.14.2 (released 22.08.2020)
+* upgraded to WebDriverManager 4.2.0
+* upgraded commons-compress to v1.20 because of security issue https://snyk.io/vuln/SNYK-JAVA-ORGAPACHECOMMONS-460507 
+* upgraded org.rauschig:jarchivelib to v1.1.0
+
+## 5.14.1 (released 21.08.2020)
+* Upgrade commons-compress to 1.20 because previous versions have security issue https://snyk.io/vuln/SNYK-JAVA-ORGAPACHECOMMONS-460507
+  * UPD The upgrade didn't work :)
+
+## 5.14.0 (released 17.08.2020)
+* #1220 create a unique downloads folder for every browser instance  --  see PR #1221
+* #1194 added method `$$.shouldHave(itemWithText("any text"))`  --  thanks to Luis Serna for PR #1194
+* #1236 add support for Safari browser  --  see PR #1237
+* #1166 added method `SelenideDriver.screenshot(fileName)`  --  see PR #1227
+* #1224 added method `SelenideDriver.screenshot(OutputType)`  --  see PR #1231
+* #1190 take screenshot if `switchTo(frame)` or `switchTo(window)` or `switchTo(alert)` failed  --  see PR #1240
+* Add chrome option "--disable-dev-shm-usage" to avoid crashing Chrome because of out of memory error
+* #434 support working Sizzle together with Dojo.js, troop.js and JQuery  --  see PR #1242
+* #1241 make $.toString() more safe  --  see PR #1245
+* #1013 improve error message when Selenide fails to describe an element  --  see PR #1239
+* upgraded to WebDriverManager 4.1.0
+
+## 5.13.1 (released 31.07.2020)
+* #1235 escape downloads path on Windows
+
+## 5.13.0 (released 08.07.2020)
+* #1156 Method text("") fails if null or empty string is given  -- thanks to Roman S.A. for PR #1186
+* #997 Avoid logging redundant `findElements` calls when executing `$.findAll()`  --  see PR #1193
+* #967 improve error messages for collections  --  see PR #1189
+* #1191 $.getWrappedElement waits again for the element  --  see PR #1203
+* upgraded to BrowserUpProxy 2.1.1
+* #943 upload multiple files without JS tricks (just using newline character)  --  see PR #1188
+* #1196 Download files with forbidden characters in name (those characters are replaced with underscore)  -- see PR #1199
+* #1206 write webdriver log to a file  --  see PR #1207
+* #1212 experimental feature: add file download mode FOLDER  --  see PR #1213 and #1215
+
+## 5.12.2 (released 29.05.2020)
+* #1172 don't close browser if `holdBrowserOpen=true`  --  see PR #1176
+* #1179 fix @Nonnull annotation for methods getText(), innerText(), innerHtml(), getSelectedText()  --  see PR #1181
+
+## 5.12.1 (released 25.05.2020)
+* Enable running Selenide without "selenium-ie-driver.jar" "selenium-opera-driver.jar" etc.
+* #1170 fixed Concurrent modification exception in WebDriverFactory  -- see PR #1171
+* #1169 fix merging capabilities of types Array and List  --  see PR #1174
+
+## 5.12.0 (released 23.05.2020)
 * #1133 disable annoying "save password?" dialog  --  see PR #1134
+* #676, #1097 Allow passing of driver-specific options from a configuration  --  see PR #1155.
+  * Thanks to Boris Osipov for PR #1103 
+  * Thanks to @SeleniumTestAB for PR #1095 
+* #1109 Enable "mobile emulation" mode in grid --  see PR #1163
+* #1139 Cannot set Firefox preference via system properties  --  see PR #1165
+* #1093 Enable "ACCEPT_INSECURE_CERTS" setting for chromium-based Edge versions  --  see PR #1167
+* #1149 Upgrade to WebDriverManager 4.0.0
 * upgrade to browserup-proxy-core:2.1.0
+* #1138 fix 'emptyMethod' folder name  --  thanks to Denis Gaievskyi for PR #1138
+* #1140 Nullity annotations for the most used APIs  --  thanks to Yuriy Artamonov for PR #1140 and #1144
+* refactoring: Extract duplicated code  --  thanks to Yuriy Artamonov for PR #1143
+* Add missing findAll with CSS selector to SelenideDriver  --  thanks to Yuriy Artamonov for PR #1145
 
 ## 5.11.1 (released 21.04.2020)
 * #1130 fix "because" condition for unexisting elements
@@ -194,12 +262,12 @@ Technical changes (probably should not affect end users):
 
 ## 4.14.1 (released 06.09.2018)
 * Upgrade to WebDriverManager 3.0.0
-* #794 Removed unused setting `Configuration.dismissModalDialogs`  -- see PR https://github.com/codeborne/selenide/pull/795
+* #794 Removed unused setting `Configuration.dismissModalDialogs`  -- see PR https://github.com/selenide/selenide/pull/795
 * Removed unused setting Configuration.openBrowserTimeoutMs
-* #798 Remove deprecated method $.followLink()  -- see PR https://github.com/codeborne/selenide/pull/799
+* #798 Remove deprecated method $.followLink()  -- see PR https://github.com/selenide/selenide/pull/799
 
 ## 4.14.0 (released 29.08.2018)
-* #784 Enable BasicAuth through Selenide proxy server  -- see https://github.com/codeborne/selenide/pull/785
+* #784 Enable BasicAuth through Selenide proxy server  -- see https://github.com/selenide/selenide/pull/785
 * #788 Add setting to enable/disable proxy server
 * #789 Remove `?timestamp` parameter for IE
 
@@ -220,15 +288,15 @@ Technical changes (probably should not affect end users):
 * #778 Fixed Selenide tests for FireFox
 
 ## 4.12.3 (released 17.07.2018)
-* [#696](https://github.com/codeborne/selenide/issues/696) Reload collection on every method call
-* [#758](https://github.com/codeborne/selenide/issues/758) Timeout for downloading files  --  thanks to Yuri Ivanov @YuriIvanov
-* [#757](https://github.com/codeborne/selenide/pull/757) Add support for JUnit5  --  thanks to Aliaksandr Rasolka @rosolko
-* [#757](https://github.com/codeborne/selenide/pull/757) Upgrade Selenide own tests to JUnit5 and AssertJ  --  thanks to Aliaksandr Rasolka @rosolko
+* [#696](https://github.com/selenide/selenide/issues/696) Reload collection on every method call
+* [#758](https://github.com/selenide/selenide/issues/758) Timeout for downloading files  --  thanks to Yuri Ivanov @YuriIvanov
+* [#757](https://github.com/selenide/selenide/pull/757) Add support for JUnit5  --  thanks to Aliaksandr Rasolka @rosolko
+* [#757](https://github.com/selenide/selenide/pull/757) Upgrade Selenide own tests to JUnit5 and AssertJ  --  thanks to Aliaksandr Rasolka @rosolko
 
 ## 4.12.2
 
-* [#749](https://github.com/codeborne/selenide/pull/749) Added because method to CollectionCondition -- thanks to Mikhail Sidelnikov @sidelnikovmike
-* [#695](https://github.com/codeborne/selenide/issues/695) Do not open a browser if `Configuration.reopenBrowserOnFail` is `false` and user has not set webdriver manually 
+* [#749](https://github.com/selenide/selenide/pull/749) Added because method to CollectionCondition -- thanks to Mikhail Sidelnikov @sidelnikovmike
+* [#695](https://github.com/selenide/selenide/issues/695) Do not open a browser if `Configuration.reopenBrowserOnFail` is `false` and user has not set webdriver manually 
 * Upgrade selenium to 3.13.0 version
 * Upgrade webdrivermanager to 2.2.3 version
 

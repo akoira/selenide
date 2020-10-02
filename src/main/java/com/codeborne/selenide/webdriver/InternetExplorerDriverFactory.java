@@ -2,34 +2,51 @@ package com.codeborne.selenide.webdriver;
 
 import com.codeborne.selenide.Browser;
 import com.codeborne.selenide.Config;
+import io.github.bonigarcia.wdm.WebDriverManager;
+import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.ie.InternetExplorerDriver;
 import org.openqa.selenium.ie.InternetExplorerOptions;
-import org.openqa.selenium.remote.DesiredCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class InternetExplorerDriverFactory extends AbstractDriverFactory {
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
+import java.io.File;
+
+@ParametersAreNonnullByDefault
+public class InternetExplorerDriverFactory extends AbstractDriverFactory {
   private static final Logger log = LoggerFactory.getLogger(InternetExplorerDriverFactory.class);
 
   @Override
-  boolean supports(Config config, Browser browser) {
-    return browser.isIE();
+  public void setupWebdriverBinary() {
+    if (isSystemPropertyNotSet("webdriver.ie.driver")) {
+      WebDriverManager.iedriver().setup();
+    }
   }
 
   @Override
-  WebDriver create(Config config, Proxy proxy) {
-    return createInternetExplorerDriver(config, proxy);
+  @CheckReturnValue
+  @Nonnull
+  public WebDriver create(Config config, Browser browser, @Nullable Proxy proxy, File browserDownloadsFolder) {
+    InternetExplorerOptions options = createCapabilities(config, browser, proxy, browserDownloadsFolder);
+    return new InternetExplorerDriver(options);
   }
 
-  private WebDriver createInternetExplorerDriver(Config config, Proxy proxy) {
-    DesiredCapabilities capabilities = createCommonCapabilities(config, proxy);
+  @Override
+  @CheckReturnValue
+  @Nonnull
+  public InternetExplorerOptions createCapabilities(Config config, Browser browser,
+                                                    @Nullable Proxy proxy, File browserDownloadsFolder) {
+    Capabilities capabilities = createCommonCapabilities(config, browser, proxy);
     InternetExplorerOptions options = new InternetExplorerOptions(capabilities);
     if (!config.browserBinary().isEmpty()) {
       log.info("Using browser binary: {}", config.browserBinary());
       log.warn("Changing browser binary not supported in InternetExplorer, setting will be ignored.");
     }
-    return new InternetExplorerDriver(options);
+    return options;
   }
 }

@@ -5,8 +5,12 @@ import com.codeborne.selenide.SelenideElement;
 import com.codeborne.selenide.impl.WebElementSource;
 import org.openqa.selenium.WebElement;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.IOException;
 
+@ParametersAreNonnullByDefault
 public class GetSelectedValue implements Command<String> {
   private final Command<SelenideElement> getSelectedOption;
 
@@ -19,7 +23,9 @@ public class GetSelectedValue implements Command<String> {
   }
 
   @Override
-  public String execute(SelenideElement proxy, WebElementSource selectElement, Object[] args) throws IOException {
+  @CheckReturnValue
+  @Nullable
+  public String execute(SelenideElement proxy, WebElementSource selectElement, @Nullable Object[] args) throws IOException {
     WebElement option = getSelectedOption.execute(proxy, selectElement, args);
     return option == null ? null : option.getAttribute("value");
   }

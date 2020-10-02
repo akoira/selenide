@@ -8,16 +8,17 @@ import org.openqa.selenium.WebDriverException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+@ParametersAreNonnullByDefault
 public class PageSourceExtractor {
   private static final Logger log = LoggerFactory.getLogger(PageSourceExtractor.class);
   protected Set<String> printedErrors = new ConcurrentSkipListSet<>();
@@ -31,6 +32,7 @@ public class PageSourceExtractor {
     this.fileName = fileName;
   }
 
+  @Nonnull
   protected File extract(boolean retryIfAlert) {
     File pageSource = new File(config.reportsFolder(), fileName + ".html");
     try {
@@ -52,10 +54,9 @@ public class PageSourceExtractor {
     return pageSource;
   }
 
-
   protected void writeToFile(String content, File targetFile) {
     try (ByteArrayInputStream in = new ByteArrayInputStream(content.getBytes(UTF_8))) {
-      copyFile(in, targetFile);
+      FileHelper.copyFile(in, targetFile);
     } catch (IOException e) {
       log.error("Failed to write file {}", targetFile.getAbsolutePath(), e);
     }
@@ -70,28 +71,6 @@ public class PageSourceExtractor {
     }
   }
 
-  protected void copyFile(InputStream in, File targetFile) throws IOException {
-    ensureFolderExists(targetFile);
-
-    try (FileOutputStream out = new FileOutputStream(targetFile)) {
-      byte[] buffer = new byte[1024];
-      int len;
-      while ((len = in.read(buffer)) != -1) {
-        out.write(buffer, 0, len);
-      }
-    }
-  }
-
-  protected void ensureFolderExists(File targetFile) {
-    File folder = targetFile.getParentFile();
-    if (!folder.exists()) {
-      log.info("Creating folder: {}", folder);
-      if (!folder.mkdirs()) {
-        log.error("Failed to create {}", folder);
-      }
-    }
-  }
-
   private void retryingExtractionOnAlert(Exception e) {
     try {
       Alert alert = driver.switchTo().alert();
@@ -102,6 +81,4 @@ public class PageSourceExtractor {
       log.error("Failed to close alert", unableToCloseAlert);
     }
   }
-
-
 }

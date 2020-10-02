@@ -12,18 +12,24 @@ import com.codeborne.selenide.collections.SizeLessThanOrEqual;
 import com.codeborne.selenide.collections.SizeNotEqual;
 import com.codeborne.selenide.collections.Texts;
 import com.codeborne.selenide.collections.TextsInAnyOrder;
+import com.codeborne.selenide.collections.ItemWithText;
 import com.codeborne.selenide.impl.WebElementsCollection;
-import org.checkerframework.checker.nullness.qual.Nullable;
-import com.google.errorprone.annotations.CheckReturnValue;
 import org.openqa.selenium.WebElement;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
 import java.util.function.Predicate;
 
+@ParametersAreNonnullByDefault
 public abstract class CollectionCondition implements Predicate<List<WebElement>> {
   protected String explanation;
 
-  public abstract void fail(WebElementsCollection collection, List<WebElement> elements, Exception lastError, long timeoutMs);
+  public abstract void fail(WebElementsCollection collection,
+                            @Nullable List<WebElement> elements,
+                            @Nullable Exception lastError,
+                            long timeoutMs);
 
   public static CollectionCondition empty = size(0);
 
@@ -154,6 +160,17 @@ public abstract class CollectionCondition implements Predicate<List<WebElement>>
   }
 
   /**
+   * Checks if given collection has an element with given text.
+   * The condition is satisfied if one or more elements in this collection have exactly the given text.
+   *
+   * @param expectedText The expected text in the collection
+   */
+  @CheckReturnValue
+  public static CollectionCondition itemWithText(String expectedText) {
+    return new ItemWithText(expectedText);
+  }
+
+  /**
    * Wraps CollectionCondition without any changes except toString() method
    * where explanation string (because) are being appended
    */
@@ -172,7 +189,10 @@ public abstract class CollectionCondition implements Predicate<List<WebElement>>
     }
 
     @Override
-    public void fail(WebElementsCollection collection, List<WebElement> elements, Exception lastError, long timeoutMs) {
+    public void fail(WebElementsCollection collection,
+                     @Nullable List<WebElement> elements,
+                     @Nullable Exception lastError,
+                     long timeoutMs) {
       delegate.fail(collection, elements, lastError, timeoutMs);
     }
 

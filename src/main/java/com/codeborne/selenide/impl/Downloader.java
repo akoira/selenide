@@ -2,8 +2,14 @@ package com.codeborne.selenide.impl;
 
 import com.codeborne.selenide.Config;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.File;
 
+import static com.codeborne.selenide.impl.FileHelper.ensureFolderExists;
+
+@ParametersAreNonnullByDefault
 public class Downloader {
   private final Randomizer random;
 
@@ -15,19 +21,26 @@ public class Downloader {
     this.random = random;
   }
 
+  @CheckReturnValue
+  @Nonnull
   public String randomFileName() {
     return random.text();
   }
 
+  @CheckReturnValue
+  @Nonnull
   public File prepareTargetFile(Config config, String fileName) {
+    File uniqueFolder = prepareTargetFolder(config);
+    return new File(uniqueFolder, fileName);
+  }
+
+  @Nonnull
+  public File prepareTargetFolder(Config config) {
     File uniqueFolder = new File(config.downloadsFolder(), random.text());
     if (uniqueFolder.exists()) {
       throw new IllegalStateException("Unbelievable! Unique folder already exists: " + uniqueFolder.getAbsolutePath());
     }
-    if (!uniqueFolder.mkdirs()) {
-      throw new RuntimeException("Failed to create folder " + uniqueFolder.getAbsolutePath());
-    }
-
-    return new File(uniqueFolder, fileName);
+    ensureFolderExists(uniqueFolder);
+    return uniqueFolder;
   }
 }

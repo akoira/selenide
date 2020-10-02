@@ -2,7 +2,6 @@ package grid;
 
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.WebDriverProvider;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -10,21 +9,16 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 import static com.codeborne.selenide.CollectionCondition.size;
 import static com.codeborne.selenide.Selenide.$$;
-import static com.codeborne.selenide.WebDriverRunner.isChrome;
-import static org.assertj.core.api.Assumptions.assumeThat;
 
 public class CustomWebdriverProviderWithRemoteBrowser extends AbstractGridTest {
-
-  @BeforeEach
-  void setUp() {
-    assumeThat(isChrome()).isTrue();
-  }
-
   @Test
   void customWebdriverProviderCanUseRemoteWebdriver() {
     MyProvider.port = hubPort;
@@ -33,10 +27,13 @@ public class CustomWebdriverProviderWithRemoteBrowser extends AbstractGridTest {
     $$("#radioButtons input").shouldHave(size(4));
   }
 
+  @ParametersAreNonnullByDefault
   static class MyProvider implements WebDriverProvider {
     static int port;
 
     @Override
+    @CheckReturnValue
+    @Nonnull
     public WebDriver createDriver(DesiredCapabilities desiredCapabilities) {
       ChromeOptions options = new ChromeOptions();
       options.setHeadless(true);

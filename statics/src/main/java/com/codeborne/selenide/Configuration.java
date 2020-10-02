@@ -1,6 +1,6 @@
 package com.codeborne.selenide;
 
-import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.MutableCapabilities;
 
 /**
  * Configuration settings for Selenide default browser
@@ -131,7 +131,7 @@ public class Configuration {
    * <br>
    * Default value: DesiredCapabilities::new
    */
-  public static DesiredCapabilities browserCapabilities = defaults.browserCapabilities();
+  public static MutableCapabilities browserCapabilities = defaults.browserCapabilities();
 
   /**
    * Should webdriver wait until page is completely loaded.
@@ -152,6 +152,15 @@ public class Configuration {
    * @since 3.5
    */
   public static String pageLoadStrategy = defaults.pageLoadStrategy();
+
+  /**
+   * Timeout for loading a web page (in milliseconds).
+   * Default timeout in Selenium WebDriver is 300 seconds (which is incredibly long).
+   * Selenide default is 30 seconds.
+   *
+   * @since 5.15.0
+   */
+  public static long pageLoadTimeout = defaults.pageLoadTimeout();
 
   /**
    * ATTENTION! Automatic WebDriver waiting after click isn't working in case of using this feature.
@@ -215,7 +224,7 @@ public class Configuration {
    * Some people reported 150% speedup (because sending characters one-by-one was especially
    * slow via network to Selenium Grid on cloud).
    * <br>
-   * https://github.com/codeborne/selenide/issues/135
+   * https://github.com/selenide/selenide/issues/135
    * Can be configured either programmatically or by system property "-Dselenide.fastSetValue=true".
    * <br>
    * Default value: false
@@ -230,7 +239,7 @@ public class Configuration {
    * With this property being set to true, tests may no longer be dependent on actual control implementation in html and
    * be more abstract.
    * <br>
-   * https://github.com/codeborne/selenide/issues/508
+   * https://github.com/selenide/selenide/issues/508
    * Can be configured either programmatically or by system property "-Dselenide.versatileSetValue=true".
    * <br>
    * Default value: false

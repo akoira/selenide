@@ -2,11 +2,15 @@ package com.codeborne.selenide.proxy;
 
 import com.browserup.bup.BrowserUpProxy;
 import com.browserup.bup.client.ClientUtil;
+import com.browserup.bup.filters.RequestFilter;
 import com.browserup.bup.filters.ResponseFilter;
 import com.codeborne.selenide.Config;
-import com.browserup.bup.filters.RequestFilter;
 import org.openqa.selenium.Proxy;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,9 +23,11 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
  *
  * It holds map of request and response filters by name.
  */
+@ParametersAreNonnullByDefault
 public class SelenideProxyServer {
   private final Config config;
   private final InetAddressResolver inetAddressResolver;
+  @Nullable
   private final Proxy outsideProxy;
   private final BrowserUpProxy proxy;
   private final Map<String, RequestFilter> requestFilters = new HashMap<>();
@@ -34,11 +40,13 @@ public class SelenideProxyServer {
    *
    * @param outsideProxy another proxy server used by test author for his own need (can be null)
    */
-  public SelenideProxyServer(Config config, Proxy outsideProxy) {
+  public SelenideProxyServer(Config config, @Nullable Proxy outsideProxy) {
     this(config, outsideProxy, new InetAddressResolver(), new BrowserUpProxyServerUnlimited());
   }
 
-  protected SelenideProxyServer(Config config, Proxy outsideProxy, InetAddressResolver inetAddressResolver, BrowserUpProxy proxy) {
+  protected SelenideProxyServer(Config config, @Nullable Proxy outsideProxy,
+                                InetAddressResolver inetAddressResolver,
+                                BrowserUpProxy proxy) {
     this.config = config;
     this.outsideProxy = outsideProxy;
     this.inetAddressResolver = inetAddressResolver;
@@ -65,6 +73,7 @@ public class SelenideProxyServer {
     port = proxy.getPort();
   }
 
+  @CheckReturnValue
   public boolean isStarted() {
     return proxy.isStarted();
   }
@@ -111,6 +120,8 @@ public class SelenideProxyServer {
   /**
    * Converts this proxy to a "selenium" proxy that can be used by webdriver
    */
+  @CheckReturnValue
+  @Nonnull
   public Proxy createSeleniumProxy() {
     return isEmpty(config.proxyHost())
       ? ClientUtil.createSeleniumProxy(proxy)
@@ -135,11 +146,15 @@ public class SelenideProxyServer {
    *
    * @return browser up proxy instance
    */
+  @CheckReturnValue
+  @Nonnull
   public BrowserUpProxy getProxy() {
     return proxy;
   }
 
   @Override
+  @CheckReturnValue
+  @Nonnull
   public String toString() {
     return String.format("Selenide proxy server: %s", port);
   }
@@ -148,6 +163,8 @@ public class SelenideProxyServer {
    * Get request filter by name
    */
   @SuppressWarnings("unchecked")
+  @CheckReturnValue
+  @Nullable
   public <T extends RequestFilter> T requestFilter(String name) {
     return (T) requestFilters.get(name);
   }
@@ -158,6 +175,8 @@ public class SelenideProxyServer {
    * By default, the only one filter "download" is available.
    */
   @SuppressWarnings("unchecked")
+  @CheckReturnValue
+  @Nullable
   public <T extends ResponseFilter> T responseFilter(String name) {
     return (T) responseFilters.get(name);
   }

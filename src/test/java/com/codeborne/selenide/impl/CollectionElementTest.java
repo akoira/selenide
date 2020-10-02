@@ -9,15 +9,13 @@ import org.assertj.core.api.WithAssertions;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.WebElement;
 
-import java.util.List;
-
-import static java.util.Arrays.asList;
+import static com.codeborne.selenide.Mocks.mockCollection;
 import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class CollectionElementTest implements WithAssertions {
-  private Driver driver = new DriverStub();
+  private final Driver driver = new DriverStub();
 
   @Test
   void wrap() {
@@ -34,15 +32,12 @@ class CollectionElementTest implements WithAssertions {
 
   @Test
   void getWebElement() {
-    WebElementsCollection collection = mock(WebElementsCollection.class);
     WebElement mockedWebElement1 = mock(WebElement.class);
     WebElement mockedWebElement2 = mock(WebElement.class);
-    List<WebElement> listOfMockedElements = asList(mockedWebElement1, mockedWebElement2);
-    when(collection.getElements()).thenReturn(listOfMockedElements);
+    WebElementsCollection collection = mockCollection("", mockedWebElement1, mockedWebElement2);
     CollectionElement collectionElement = new CollectionElement(collection, 1);
 
-    assertThat(collectionElement.getWebElement())
-      .isEqualTo(mockedWebElement2);
+    assertThat(collectionElement.getWebElement()).isEqualTo(mockedWebElement2);
   }
 
   @Test
@@ -72,13 +67,13 @@ class CollectionElementTest implements WithAssertions {
     WebElementsCollection collection = mock(WebElementsCollection.class);
     when(collection.driver()).thenReturn(driver);
     when(collection.description()).thenReturn("Collection description");
-    CollectionElement collectionElement = new CollectionElement(collection, 1);
+    CollectionElement collectionElement = new CollectionElement(collection, 33);
 
     Condition mockedCollection = mock(Condition.class);
     ElementNotFound elementNotFoundError = collectionElement.createElementNotFoundError(mockedCollection, new Error("Error message"));
 
     assertThat(elementNotFoundError)
-      .hasMessage(String.format("Element not found {Collection description}%n" +
+      .hasMessage(String.format("Element not found {Collection description[33]}%n" +
         "Expected: visible%n" +
         "Screenshot: null%n" +
         "Timeout: 0 ms.%n" +

@@ -2,6 +2,10 @@ package com.codeborne.selenide.impl;
 
 import org.apache.commons.io.FilenameUtils;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Collection;
@@ -14,14 +18,23 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.left;
 
+@ParametersAreNonnullByDefault
 public class HttpHelper {
 
-  private final Pattern pattern = Pattern.compile(".*filename\\*?=\"?((.+)'')?([^\";?]*)\"?(;charset=(.*))?.*", CASE_INSENSITIVE);
+  private static final Pattern FILENAME_IN_CONTENT_DISPOSITION_HEADER =
+    Pattern.compile(".*filename\\*?=\"?((.+)'')?([^\";?]*)\"?(;charset=(.*))?.*", CASE_INSENSITIVE);
 
+  private static final Pattern FILENAME_FORBIDDEN_CHARACTERS =
+    Pattern.compile("[#%&{}\\\\<>*?$!'\":@+`|=]");
+
+  @CheckReturnValue
+  @Nonnull
   public Optional<String> getFileNameFromContentDisposition(Map<String, String> headers) {
     return getFileNameFromContentDisposition(headers.entrySet());
   }
 
+  @CheckReturnValue
+  @Nonnull
   public Optional<String> getFileNameFromContentDisposition(Collection<Map.Entry<String, String>> headers) {
     for (Map.Entry<String, String> header : headers) {
       Optional<String> fileName = getFileNameFromContentDisposition(header.getKey(), header.getValue());
@@ -32,11 +45,13 @@ public class HttpHelper {
     return Optional.empty();
   }
 
-  public Optional<String> getFileNameFromContentDisposition(String headerName, String headerValue) {
+  @CheckReturnValue
+  @Nonnull
+  public Optional<String> getFileNameFromContentDisposition(String headerName, @Nullable String headerValue) {
     if (!"Content-Disposition".equalsIgnoreCase(headerName) || headerValue == null) {
       return Optional.empty();
     }
-    Matcher regex = pattern.matcher(headerValue);
+    Matcher regex = FILENAME_IN_CONTENT_DISPOSITION_HEADER.matcher(headerValue);
     if (!regex.matches()) {
       return Optional.empty();
     }
@@ -45,6 +60,8 @@ public class HttpHelper {
     return Optional.of(decodeHttpHeader(fileName, encoding));
   }
 
+  @CheckReturnValue
+  @Nonnull
   private String decodeHttpHeader(String encoded, String encoding) {
     try {
       return URLDecoder.decode(encoded, defaultIfEmpty(encoding, "UTF-8"));
@@ -53,13 +70,26 @@ public class HttpHelper {
     }
   }
 
+  @CheckReturnValue
+  @Nonnull
   public String getFileName(String url) {
-    return trimQuery(FilenameUtils.getName(url));
+    return normalize(trimQuery(FilenameUtils.getName(url)));
   }
 
+  @CheckReturnValue
+  @Nonnull
   private String trimQuery(String filenameWithQuery) {
     return filenameWithQuery.contains("?")
-      ? left(filenameWithQuery, filenameWithQuery.indexOf("?"))
+      ? left(filenameWithQuery, filenameWithQuery.indexOf('?'))
       : filenameWithQuery;
+  }
+
+  @CheckReturnValue
+  @Nonnull
+  public String normalize(String fileName) {
+    if (fileName.contains("/")) {
+      throw new IllegalArgumentException("File name cannot contain slash: " + fileName);
+    }
+    return FILENAME_FORBIDDEN_CHARACTERS.matcher(fileName).replaceAll("_").replace(' ', '+');
   }
 }

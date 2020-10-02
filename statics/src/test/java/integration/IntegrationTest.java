@@ -17,6 +17,7 @@ import static com.codeborne.selenide.Browsers.CHROME;
 import static com.codeborne.selenide.Configuration.browserSize;
 import static com.codeborne.selenide.Configuration.clickViaJs;
 import static com.codeborne.selenide.Configuration.fastSetValue;
+import static com.codeborne.selenide.Configuration.downloadsFolder;
 import static com.codeborne.selenide.Configuration.timeout;
 import static com.codeborne.selenide.Configuration.versatileSetValue;
 import static com.codeborne.selenide.FileDownloadMode.HTTPGET;
@@ -40,10 +41,12 @@ public abstract class IntegrationTest extends BaseIntegrationTest {
     resetSettings();
   }
 
+  @BeforeEach
   @AfterEach
   public void restoreDefaultProperties() {
     timeout = 1;
     clickViaJs = false;
+    downloadsFolder = "build/downloads";
   }
 
   @AfterAll
@@ -64,7 +67,8 @@ public abstract class IntegrationTest extends BaseIntegrationTest {
     browserSize = System.getProperty("selenide.browserSize", "1200x960");
     Configuration.proxyPort = 0;
     Configuration.proxyHost = "";
-    useProxy(true);
+    useProxy(false);
+    Configuration.fileDownload = HTTPGET;
   }
 
   protected void openFile(String fileName) {

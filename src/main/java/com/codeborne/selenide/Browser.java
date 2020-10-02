@@ -1,5 +1,7 @@
 package com.codeborne.selenide;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 import static com.codeborne.selenide.Browsers.CHROME;
 import static com.codeborne.selenide.Browsers.EDGE;
 import static com.codeborne.selenide.Browsers.FIREFOX;
@@ -7,7 +9,9 @@ import static com.codeborne.selenide.Browsers.IE;
 import static com.codeborne.selenide.Browsers.INTERNET_EXPLORER;
 import static com.codeborne.selenide.Browsers.LEGACY_FIREFOX;
 import static com.codeborne.selenide.Browsers.OPERA;
+import static com.codeborne.selenide.Browsers.SAFARI;
 
+@ParametersAreNonnullByDefault
 public class Browser {
   public final String name;
   public final boolean headless;
@@ -45,7 +49,11 @@ public class Browser {
     return OPERA.equalsIgnoreCase(name);
   }
 
+  public boolean isSafari() {
+    return SAFARI.equalsIgnoreCase(name);
+  }
+
   public boolean supportsInsecureCerts() {
-    return !isIE() && !isEdge();
+    return !isIE() && !isEdge() && !isSafari();
   }
 }

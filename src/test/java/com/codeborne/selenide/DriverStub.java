@@ -13,6 +13,7 @@ public class DriverStub implements Driver {
   private final Browser browser;
   private final WebDriver webDriver;
   private final SelenideProxyServer proxy;
+  private final DownloadsFolder browserDownloadsFolder = new SharedDownloadsFolder("build/downloads/45");
 
   public DriverStub() {
     this("zopera");
@@ -60,6 +61,11 @@ public class DriverStub implements Driver {
   }
 
   @Override
+  public DownloadsFolder browserDownloadsFolder() {
+    return browserDownloadsFolder;
+  }
+
+  @Override
   public void close() {
     webDriver.close();
   }
@@ -88,7 +94,7 @@ public class DriverStub implements Driver {
 
   @Override
   public SelenideTargetLocator switchTo() {
-    return new SelenideTargetLocator(config(), getWebDriver());
+    return new SelenideTargetLocator(this);
   }
 
   @Override

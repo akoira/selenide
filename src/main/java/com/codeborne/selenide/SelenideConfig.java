@@ -1,6 +1,7 @@
 package com.codeborne.selenide;
 
 import com.codeborne.selenide.impl.CiReportUrl;
+import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
 import static com.codeborne.selenide.AssertionMode.STRICT;
@@ -19,7 +20,8 @@ public class SelenideConfig implements Config {
   private boolean driverManagerEnabled = Boolean.parseBoolean(System.getProperty("selenide.driverManagerEnabled", "true"));
   private String browserBinary = System.getProperty("selenide.browserBinary", "");
   private String pageLoadStrategy = System.getProperty("selenide.pageLoadStrategy", "normal");
-  private DesiredCapabilities browserCapabilities = new DesiredCapabilities();
+  private long pageLoadTimeout = Long.parseLong(System.getProperty("selenide.pageLoadTimeout", "30000"));
+  private MutableCapabilities browserCapabilities = new DesiredCapabilities();
 
   private String baseUrl = System.getProperty("selenide.baseUrl", "http://localhost:8080");
   private long timeout = Long.parseLong(System.getProperty("selenide.timeout", "4000"));
@@ -327,13 +329,23 @@ public class SelenideConfig implements Config {
     return pageLoadStrategy;
   }
 
+  @Override
+  public long pageLoadTimeout() {
+    return pageLoadTimeout;
+  }
+
   public SelenideConfig pageLoadStrategy(String pageLoadStrategy) {
     this.pageLoadStrategy = pageLoadStrategy;
     return this;
   }
 
+  public SelenideConfig pageLoadTimeout(long pageLoadTimeout) {
+    this.pageLoadTimeout = pageLoadTimeout;
+    return this;
+  }
+
   @Override
-  public DesiredCapabilities browserCapabilities() {
+  public MutableCapabilities browserCapabilities() {
     return browserCapabilities;
   }
 

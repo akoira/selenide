@@ -4,8 +4,8 @@ import com.browserup.bup.filters.ResponseFilter;
 import com.browserup.bup.util.HttpMessageContents;
 import com.browserup.bup.util.HttpMessageInfo;
 import com.codeborne.selenide.Config;
-import com.codeborne.selenide.files.FileFilter;
 import com.codeborne.selenide.impl.Downloader;
+import com.codeborne.selenide.impl.Downloads;
 import com.codeborne.selenide.impl.HttpHelper;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponse;
@@ -13,6 +13,9 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -20,9 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+@ParametersAreNonnullByDefault
 public class FileDownloadFilter implements ResponseFilter {
   private static final Logger log = LoggerFactory.getLogger(FileDownloadFilter.class);
 
@@ -31,7 +34,7 @@ public class FileDownloadFilter implements ResponseFilter {
 
   private final HttpHelper httpHelper = new HttpHelper();
   private boolean active;
-  private final List<DownloadedFile> downloadedFiles = new CopyOnWriteArrayList<>();
+  private final Downloads downloads = new Downloads();
   private final List<Response> responses = new CopyOnWriteArrayList<>();
 
   public FileDownloadFilter(Config config) {
@@ -53,7 +56,7 @@ public class FileDownloadFilter implements ResponseFilter {
   }
 
   public void reset() {
-    downloadedFiles.clear();
+    downloads.clear();
     responses.clear();
   }
 
@@ -81,12 +84,11 @@ public class FileDownloadFilter implements ResponseFilter {
     if (response.status().code() < 200 || response.status().code() >= 300) return;
 
     String fileName = getFileName(r);
-    if (fileName == null) return;
 
     File file = downloader.prepareTargetFile(config, fileName);
     try {
       FileUtils.writeByteArrayToFile(file, contents.getBinaryContents());
-      downloadedFiles.add(new DownloadedFile(file, r.headers));
+      downloads.add(new DownloadedFile(file, r.headers));
     }
     catch (IOException e) {
       log.error("Failed to save downloaded file to {} for url {}", file.getAbsolutePath(), messageInfo.getUrl(), e);
@@ -104,19 +106,17 @@ public class FileDownloadFilter implements ResponseFilter {
   /**
    * @return list of all downloaded files since activation.
    */
-  public List<DownloadedFile> getDownloadedFiles() {
-    return downloadedFiles;
+  @CheckReturnValue
+  @Nonnull
+  public Downloads downloads() {
+    return downloads;
   }
 
-  /**
-   * @return list of downloaded files matching given criteria
-   */
-  public List<DownloadedFile> getDownloadedFiles(FileFilter fileFilter) {
-    return downloadedFiles.stream().filter(fileFilter::match).collect(toList());
-  }
-
+  @CheckReturnValue
+  @Nonnull
   private String getFileName(Response response) {
     return httpHelper.getFileNameFromContentDisposition(response.headers)
+      .map(httpHelper::normalize)
       .orElseGet(() -> {
         log.info("Cannot extract file name from http headers. Found headers: ");
         for (Map.Entry<String, String> header : response.headers.entrySet()) {
@@ -131,6 +131,8 @@ public class FileDownloadFilter implements ResponseFilter {
   /**
    * @return all intercepted http response (as a string) - it can be useful for debugging
    */
+  @CheckReturnValue
+  @Nonnull
   public String responsesAsString() {
     StringBuilder sb = new StringBuilder();
     sb.append("Intercepted ").append(responses.size()).append(" responses:\n");
@@ -142,20 +144,7 @@ public class FileDownloadFilter implements ResponseFilter {
     return sb.toString();
   }
 
-  /**
-   * @return all downloaded files (as a string) - it can be useful for debugging
-   */
-  public String downloadedFilesAsString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("Downloaded ").append(downloadedFiles.size()).append(" files:\n");
-
-    int i = 0;
-    for (DownloadedFile file : downloadedFiles) {
-      sb.append("  #").append(++i).append("  ").append(file.getFile().getAbsolutePath()).append("\n");
-    }
-    return sb.toString();
-  }
-
+  @ParametersAreNonnullByDefault
   private static class Response {
     private final String url;
     private final int code;
@@ -175,6 +164,8 @@ public class FileDownloadFilter implements ResponseFilter {
     }
 
     @Override
+    @CheckReturnValue
+    @Nonnull
     public String toString() {
       return url + " -> " + code + " \"" + reasonPhrase + "\" " + headers + " " +
           contentType + " " + " (" + content.length() + " bytes)";
