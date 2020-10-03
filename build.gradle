@@ -2,7 +2,6 @@ import java.nio.charset.StandardCharsets
 
 plugins {
   id 'java-library'
-  id "maven-publish"
   id 'idea'
   id 'maven'
   id 'jacoco'
@@ -13,7 +12,7 @@ plugins {
 
 group = 'com.codeborne'
 archivesBaseName = 'selenide'
-version = '5.15.0-ak1'
+version = '5.15.1'
 
 ext {
   encoding = StandardCharsets.UTF_8.name()
