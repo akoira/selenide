@@ -62,7 +62,8 @@ public class CreateDriverCommand {
       }
     }
 
-    File browserDownloadsFolder = ensureFolderExists(new File(config.downloadsFolder(), fileNamer.generateFileName()));
+    @Nullable File browserDownloadsFolder = config.remote() != null ? null :
+      ensureFolderExists(new File(config.downloadsFolder(), fileNamer.generateFileName()));
 
     WebDriver webdriver = factory.createWebDriver(config, browserProxy, browserDownloadsFolder);
 
@@ -70,17 +71,15 @@ public class CreateDriverCommand {
       currentThread().getId(), webdriver.getClass().getSimpleName(), webdriver);
 
     WebDriver webDriver = addListeners(webdriver, listeners);
-    //TODO this code has been commented to exclude memory leak in case when we use this framework
-    // as a part of a service-application. The better way I think to introduce some kind of configuration for this
-    // functionality or better to keep aa reference on this thread and provide some mechanism to remove it
-    // if it is required
-//    Runtime.getRuntime().addShutdownHook(
-//      new Thread(new SelenideDriverFinalCleanupThread(config, webDriver, selenideProxyServer))
-//    );
-//    Runtime.getRuntime().addShutdownHook(
-//      new Thread(() -> deleteFolderIfEmpty(browserDownloadsFolder))
-//    );
-    return new Result(webDriver, selenideProxyServer, new BrowserDownloadsFolder(browserDownloadsFolder));
+    Runtime.getRuntime().addShutdownHook(
+      new Thread(new SelenideDriverFinalCleanupThread(config, webDriver, selenideProxyServer))
+    );
+    if (browserDownloadsFolder != null) {
+      Runtime.getRuntime().addShutdownHook(
+        new Thread(() -> deleteFolderIfEmpty(browserDownloadsFolder))
+      );
+    }
+    return new Result(webDriver, selenideProxyServer, BrowserDownloadsFolder.from(browserDownloadsFolder));
   }
 
   @Nonnull
@@ -97,12 +96,15 @@ public class CreateDriverCommand {
     return wrapper;
   }
 
+  @ParametersAreNonnullByDefault
   public static class Result {
     public final WebDriver webDriver;
-    public final SelenideProxyServer selenideProxyServer;
-    public final DownloadsFolder browserDownloadsFolder;
+    @Nullable public final SelenideProxyServer selenideProxyServer;
+    @Nullable public final DownloadsFolder browserDownloadsFolder;
 
-    public Result(WebDriver webDriver, @Nullable SelenideProxyServer selenideProxyServer, DownloadsFolder browserDownloadsFolder) {
+    public Result(WebDriver webDriver,
+                  @Nullable SelenideProxyServer selenideProxyServer,
+                  @Nullable DownloadsFolder browserDownloadsFolder) {
       this.webDriver = webDriver;
       this.selenideProxyServer = selenideProxyServer;
       this.browserDownloadsFolder = browserDownloadsFolder;
