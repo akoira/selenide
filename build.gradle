@@ -1,8 +1,11 @@
+import java.nio.charset.StandardCharsets
+
 plugins {
   id 'java-library'
+  id 'maven-publish'
   id 'idea'
   id 'jacoco'
-  id 'checkstyle'
+//  id 'checkstyle'
   id 'com.github.spotbugs' version '4.7.0'
   id 'org.sonarqube' version '3.1.1'
 }
@@ -13,7 +16,19 @@ allprojects {
 
 group = 'com.codeborne'
 archivesBaseName = 'selenide'
-version = '5.20.4'
+version = '5.20.4-ak1'
+
+ext {
+  encoding = StandardCharsets.UTF_8.name()
+}
+
+tasks.withType(JavaCompile) {
+  options.encoding = encoding
+  options.debug = true
+}
+compileJava.options.debugOptions.debugLevel = "source,lines,vars"
+
+sourceCompatibility = JavaVersion.VERSION_1_8
 
 apply from: rootProject.file('gradle/compilation.gradle')
 apply from: rootProject.file('gradle/dependencies.gradle')
