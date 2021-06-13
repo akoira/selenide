@@ -109,7 +109,8 @@ public class WebDriverFactory {
         webdriverFactory.setupWebdriverBinary();
       }
       WebDriver webDriver = webdriverFactory.create(config, browser, proxy, browserDownloadsFolder);
-      httpClientTimeouts.setup(webDriver);
+//TODO SHOULD BE COMMENTED - NIFI USE INCOMPATIBLE VERSION OF OKHTTP
+//      httpClientTimeouts.setup(webDriver);
       return webDriver;
     }
   }
