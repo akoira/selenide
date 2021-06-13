@@ -71,14 +71,18 @@ public class CreateDriverCommand {
       currentThread().getId(), webdriver.getClass().getSimpleName(), webdriver);
 
     WebDriver webDriver = addListeners(webdriver, listeners);
-    Runtime.getRuntime().addShutdownHook(
-      new Thread(new SelenideDriverFinalCleanupThread(config, webDriver, selenideProxyServer))
-    );
-    if (browserDownloadsFolder != null) {
-      Runtime.getRuntime().addShutdownHook(
-        new Thread(() -> deleteFolderIfEmpty(browserDownloadsFolder))
-      );
-    }
+    //TODO this code has been commented to exclude memory leak in case when we use this framework
+    // as a part of a service-application. The better way I think to introduce some kind of configuration for this
+    // functionality or better to keep aa reference on this thread and provide some mechanism to remove it
+    // if it is required
+//    Runtime.getRuntime().addShutdownHook(
+//      new Thread(new SelenideDriverFinalCleanupThread(config, webDriver, selenideProxyServer))
+//    );
+//    if (browserDownloadsFolder != null) {
+//      Runtime.getRuntime().addShutdownHook(
+//        new Thread(() -> deleteFolderIfEmpty(browserDownloadsFolder))
+//      );
+//    }
     return new Result(webDriver, selenideProxyServer, BrowserDownloadsFolder.from(browserDownloadsFolder));
   }
 

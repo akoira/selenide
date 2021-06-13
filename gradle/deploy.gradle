@@ -49,6 +49,7 @@ if (project.hasProperty("signing.keyId")) {
       sign publishing.publications.mavenJava
     }
   }
+}
 
   artifacts {
     archives allprojectsJar
@@ -59,13 +60,16 @@ if (project.hasProperty("signing.keyId")) {
   publishing {
     repositories {
       maven {
-        name 'Maven'
-        url project.version.endsWith("-SNAPSHOT") ?
-          'https://oss.sonatype.org/content/repositories/snapshots/' :
-          'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+        if (project.version.endsWith('-SNAPSHOT')) {
+          url project.property("maven.snapshot.url")
+          allowInsecureProtocol true
+        } else {
+          url project.property("maven.publish.url")
+          allowInsecureProtocol true
+        }
         credentials {
-          username "$sonatypeUsername"
-          password "$sonatypePassword"
+          username = project.property("maven.publish.user")
+          password = project.property("maven.publish.password")
         }
       }
     }
@@ -136,5 +140,5 @@ if (project.hasProperty("signing.keyId")) {
       }
     }
   }
-}
+
 
